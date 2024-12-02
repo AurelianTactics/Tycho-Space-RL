@@ -1,6 +1,7 @@
 import random
 import pygame
 import string
+import math
 
 # Contents of /tycho-space-rl/tycho-space-rl/src/standalone_game/game_logic.py
 
@@ -27,6 +28,9 @@ class Star:
             else:
                 name.append(random.choice(vowels))
         return ''.join(name)
+
+    def distance_to(self, other_star):
+        return math.sqrt((self.x - other_star.x) ** 2 + (self.y - other_star.y) ** 2)
 
 class StarMap:
     def __init__(self, map_width=10, map_height=10, seed=None, min_distance=5, star_probability=0.1, 
@@ -76,14 +80,19 @@ class StarMap:
 
 class Game:
     def __init__(self, map_width=10, map_height=10, seed=None, min_distance=5, star_probability=0.1,
-                 min_ships_per_turn=1, max_ships_per_turn=6, max_stars=None, num_players=2):
+                 min_ships_per_turn=1, max_ships_per_turn=6, max_stars=None, num_players=2,
+                 max_turns=1000, victory_percentage=0.9, distance_ships_travel_per_turn=5):
         self.players = []
         self.current_turn = 0
+        self.turn = 0
         self.star_map = StarMap(map_width=map_width, map_height=map_height, seed=seed, min_distance=min_distance,
                                 star_probability=star_probability,
                                 min_ships_per_turn=min_ships_per_turn, max_ships_per_turn=max_ships_per_turn,
                                 max_stars=max_stars)
         self.num_players = num_players
+        self.max_turns = max_turns
+        self.victory_percentage = victory_percentage
+        self.distance_ships_travel_per_turn = distance_ships_travel_per_turn
         self.player_colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]  # Add more colors if needed
         self.player_shapes = ["circle", "square", "triangle", "hexagon"]  # Add more shapes if needed
         self.generate_players()
@@ -98,23 +107,55 @@ class Game:
             player_home_star.shape = self.player_shapes[i % len(self.player_shapes)]
             self.players.append(player_home_star)
 
+    def increment_turn(self):
+        self.turn += 1
+
+    def check_victory_conditions(self):
+        player_star_counts = {i: 0 for i in range(self.num_players)}
+        for star in self.star_map.stars:
+            if star.owner != -1:
+                player_star_counts[star.owner] += 1
+
+        # Check if only one player owns a star
+        active_players = [player for player, count in player_star_counts.items() if count > 0]
+        if len(active_players) == 1:
+            return active_players[0]
+
+        # Check if a player owns >= 90% of the stars
+        total_stars = len(self.star_map.stars)
+        for player, count in player_star_counts.items():
+            if count / total_stars >= self.victory_percentage:
+                return player
+
+        # Check if the game reaches the maximum number of turns
+        if self.turn >= self.max_turns:
+            max_stars = max(player_star_counts.values())
+            winners = [player for player, count in player_star_counts.items() if count == max_stars]
+            if len(winners) == 1:
+                return winners[0]
+            else:
+                return -1  # Tie, no winner
+
+        return None  # No winner yet
+
+    def calculate_travel_turns(self, star1, star2):
+        distance = star1.distance_to(star2)
+        return math.ceil(distance / self.distance_ships_travel_per_turn)
+
     def capture_star(self):
         # to do fix this
         pass
 
-
     def end_turn(self):
+        self.increment_turn()
+        winner = self.check_victory_conditions()
+        if winner is not None:
+            print(f"Player {winner} wins!")
+            return winner
         # to do fix this
-        pass
 
     def check_winner(self):
-        # to do fix this
-        pass
-        # total_stars = self.star_map.total_stars
-        # for player, star_count in self.stars.items():
-        #     if star_count >= total_stars:
-        #         return player
-        # return None
+        return self.check_victory_conditions()
 
     def total_stars(self):
         return len(self.star_map.stars)
@@ -122,8 +163,9 @@ class Game:
     def reset_game(self):
         # to do: generate a new star map
         self.current_turn = 0
+        self.turn = 0
 
-def show_star_info(screen, star):
+def show_star_info(screen, star, offset=(0, 0)):
     font = pygame.font.Font(None, 36)
     info_text = [
         f"Name: {star.name}",
@@ -132,19 +174,15 @@ def show_star_info(screen, star):
         f"Ships per Turn: {star.ships_per_turn}",
         f"Position: ({star.x}, {star.y})"
     ]
-    info_surface = pygame.Surface((400, 200))
-    info_surface.fill((255, 255, 255))
     for i, text in enumerate(info_text):
         text_surface = font.render(text, True, (0, 0, 0))
-        info_surface.blit(text_surface, (10, 10 + i * 30))
-    screen.blit(info_surface, (200, 200))
-    pygame.display.flip()
+        screen.blit(text_surface, (offset[0], offset[1] + i * 30))
 
-def draw_star_map(star_map, screen):
+def draw_star_map(star_map, screen, offset_x=0):
     BLACK = (0, 0, 0)
     SOFT_WHITE = (200, 200, 200)
     screen.fill(BLACK)
-    cell_width = screen.get_width() // star_map.width
+    cell_width = (screen.get_width() - offset_x) // star_map.width
     cell_height = screen.get_height() // star_map.height
 
     for y in range(star_map.height):
@@ -152,14 +190,14 @@ def draw_star_map(star_map, screen):
             if isinstance(star_map.map[y][x], Star):
                 star = star_map.map[y][x]
                 if star.owner == -1:
-                    pygame.draw.circle(screen, SOFT_WHITE, (x * cell_width + cell_width // 2, y * cell_height + cell_height // 2), min(cell_width, cell_height) // 4)
+                    pygame.draw.circle(screen, SOFT_WHITE, (x * cell_width + cell_width // 2 + offset_x, y * cell_height + cell_height // 2), min(cell_width, cell_height) // 4)
                 else:
                     color = star.color
                     shape = star.shape
                     if shape == "circle":
-                        pygame.draw.circle(screen, color, (x * cell_width + cell_width, y * cell_height + cell_height), min(cell_width, cell_height) // 2)
+                        pygame.draw.circle(screen, color, (x * cell_width + cell_width // 2 + offset_x, y * cell_height + cell_height // 2), min(cell_width, cell_height) // 4)
                     elif shape == "square":
-                        pygame.draw.rect(screen, color, (x * cell_width // 2, y * cell_width // 2, cell_width // 2, cell_width // 2))
+                        pygame.draw.rect(screen, color, (x * cell_width + offset_x, y * cell_height, cell_width, cell_height))
                     # Add more shapes as needed
 
     pygame.display.flip()
