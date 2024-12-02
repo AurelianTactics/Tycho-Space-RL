@@ -165,6 +165,54 @@ class Game:
         self.current_turn = 0
         self.turn = 0
 
+    def step(self, action):
+        # Implement the logic for a single step in the game
+        # to do: implement the logic for a single step in the game
+
+        winner = self.check_victory_conditions()
+
+        obs = self.get_observation()
+        reward = self.get_reward(winner)
+        terminated = self.get_is_terminated(winner)
+        truncated = self.get_is_truncated(winner)
+        info = self.get_info()
+
+        return obs, reward, terminated, truncated, info
+
+    def get_observation(self):
+        # Return the current observation of the game state
+        pass
+
+    def get_reward(self, winner):
+        # Return the reward for the current state
+        # to do: logic for multiple players
+        if winner is None or winner == -1:
+            reward = 0.
+        elif winner == 0:
+            reward = 1.
+        elif winner == 1:
+            reward = -1.
+
+        return reward
+
+    def get_is_terminated(self, winner):
+        # Return whether the game has terminated
+
+        if winner is not None:
+            is_terminated = True
+        else:
+            is_terminated = False
+
+        return is_terminated
+
+    def get_is_truncated(self, winner):
+        # Return whether the game has been truncated
+        return False
+
+    def get_info(self):
+        # Return additional information about the current state
+        return {}
+
 def show_star_info(screen, star, offset=(0, 0)):
     font = pygame.font.Font(None, 36)
     info_text = [
