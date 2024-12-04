@@ -93,7 +93,7 @@ class TychoSpaceGame:
         self.max_turns = max_turns
         self.victory_percentage = victory_percentage
         self.distance_ships_travel_per_turn = distance_ships_travel_per_turn
-        self.player_colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]  # Add more colors if needed
+        self.player_colors = [(255, 0, 0), (0, 255, 0)]  # Red for human (0), Green for AI (1)
         self.player_shapes = ["circle", "square", "triangle", "hexagon"]  # Add more shapes if needed
         self.ships_in_transit = []
         self.logs = []
@@ -258,13 +258,19 @@ class TychoSpaceGame:
 
 def show_star_info(screen, star, offset=(0, 0)):
     font = pygame.font.Font(None, 24)  # Smaller font
-    owner_symbols = {-1: "☆", 0: "①", 1: "②", 2: "③", 3: "④"}  # Symbols for different owners
+    owner_text = {-1: "Unowned", 0: "Human", 1: "AI"}  # Text for different owners
+    owner_color = {-1: (128, 128, 128), 0: (255, 0, 0), 1: (0, 255, 0)}  # Match game colors
+    
     info_text = [
-        f"{star.name} {owner_symbols.get(star.owner, '?')}",
-        f"Ships: {star.total_ships} (+{star.ships_per_turn}/turn)"
+        f"{star.name}",
+        f"Owner: {owner_text.get(star.owner, '?')}",
+        f"Ships: {star.total_ships}",
+        f"Ships/turn: {star.ships_per_turn}"
     ]
+    
     for i, text in enumerate(info_text):
-        text_surface = font.render(text, True, (0, 0, 0))
+        color = owner_color.get(star.owner, (0, 0, 0)) if i == 1 else (0, 0, 0)
+        text_surface = font.render(text, True, color)
         screen.blit(text_surface, (offset[0], offset[1] + i * 20))
 
 def draw_star_map(star_map, screen, offset_x=0, selected_star=None, target_star=None):
@@ -291,17 +297,18 @@ def draw_star_map(star_map, screen, offset_x=0, selected_star=None, target_star=
                 if star == selected_star:
                     pygame.draw.circle(star_map_surface, GOLD, 
                                     (center_x, center_y), 
-                                    star_size + 4, 2)  # Circle for left-click
+                                    star_size * 1.5, 3)  # Bigger, more visible circle
                 if star == target_star:
-                    # Draw triangle for right-click
+                    # Draw bigger triangle for right-click
+                    size_mult = 1.8
                     points = [
-                        (center_x, center_y - star_size - 8),
-                        (center_x - star_size - 4, center_y + star_size + 4),
-                        (center_x + star_size + 4, center_y + star_size + 4)
+                        (center_x, center_y - star_size * size_mult),
+                        (center_x - star_size * size_mult, center_y + star_size * size_mult),
+                        (center_x + star_size * size_mult, center_y + star_size * size_mult)
                     ]
-                    pygame.draw.polygon(star_map_surface, GOLD, points, 2)
+                    pygame.draw.polygon(star_map_surface, GOLD, points, 3)
                 
-                # Draw the star
+                # Draw the star with owner color
                 if star.owner == -1:
                     pygame.draw.circle(star_map_surface, SOFT_WHITE, 
                                     (center_x, center_y), 

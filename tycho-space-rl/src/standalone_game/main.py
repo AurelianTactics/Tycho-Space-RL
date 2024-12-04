@@ -2,7 +2,7 @@ import pygame
 from game_logic import TychoSpaceGame, draw_star_map, Star, show_star_info
 import random
 
-def draw_left_ui(screen, game, selected_star, target_star, show_menu):
+def draw_left_ui(screen, game, selected_star, target_star, show_menu, ships_to_send=""):
     font = pygame.font.Font(None, 36)
     ui_surface = pygame.Surface((200, screen.get_height()))
     ui_surface.fill((200, 200, 200))  # Lighter shade of gray
@@ -40,11 +40,40 @@ def draw_left_ui(screen, game, selected_star, target_star, show_menu):
                 pygame.draw.rect(ui_surface, (100, 100, 100), send_btn)
                 ui_surface.blit(font_small.render("Send Ships", True, (255, 255, 255)), (15, 265))
 
+    # Display ship sending controls when appropriate
+    if selected_star and target_star and selected_star.owner == 0:  # Only if human player (player 0) owns the star
+        font_small = pygame.font.Font(None, 24)
+        
+        # Add ship count input box
+        input_box = pygame.Rect(10, 230, 180, 30)
+        pygame.draw.rect(ui_surface, (240, 240, 240), input_box)  # Light background
+        pygame.draw.rect(ui_surface, (100, 100, 100), input_box, 2)  # Border
+        
+        # Show current input or placeholder
+        text = font_small.render(f"Ships to send: {ships_to_send}", True, (0, 0, 0))
+        ui_surface.blit(text, (15, 235))
+
+        # Add send ships button if we have a valid number
+        try:
+            num_ships = int(ships_to_send) if ships_to_send else 0
+            if 0 < num_ships <= selected_star.total_ships:
+                send_btn = pygame.Rect(10, 270, 180, 30)
+                pygame.draw.rect(ui_surface, (0, 150, 0), send_btn)
+                send_text = font_small.render(f"Send {num_ships} Ships", True, (255, 255, 255))
+                ui_surface.blit(send_text, (45, 275))
+        except ValueError:
+            pass
+
     # Display target star info
     if target_star:
         target_text = font.render("Target Star:", True, (0, 0, 0))
         ui_surface.blit(target_text, (10, 300))
         show_star_info(ui_surface, target_star, offset=(10, 330))
+
+    if selected_star and target_star:
+        turns_to_reach = game.calculate_travel_turns(selected_star, target_star)
+        turns_text = font.render(f"Turns to reach: {turns_to_reach}", True, (0, 0, 0))
+        ui_surface.blit(turns_text, (10, 300))
 
     # Display end turn button
     end_turn_button = pygame.Rect(10, screen.get_height() - 100, 180, 40)
@@ -127,6 +156,7 @@ def main():
     show_menu = False
     show_log = False
     show_ships = False
+    ships_to_send = ""  # Add this variable for text input
 
     while running:
         for event in pygame.event.get():
@@ -196,12 +226,29 @@ def main():
                             target_star = None
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
-                    game.end_turn()
+                    if selected_star and target_star and selected_star.owner == 0:
+                        try:
+                            num_ships = int(ships_to_send)
+                            if 0 < num_ships <= selected_star.total_ships:
+                                game.add_ships_in_transit(0, num_ships, selected_star, target_star)
+                                selected_star.total_ships -= num_ships
+                                ships_to_send = ""
+                                selected_star = None
+                                target_star = None
+                        except ValueError:
+                            pass
+                    else:
+                        game.end_turn()
+                elif event.key == pygame.K_BACKSPACE:
+                    ships_to_send = ships_to_send[:-1]
+                elif selected_star and target_star and selected_star.owner == 0:
+                    if event.unicode.isnumeric():
+                        ships_to_send += event.unicode
 
         screen.fill((0, 0, 0))  # Clear the screen to prevent flickering
         # Change the order: draw UIs first, then star map
         draw_star_map(game.star_map, screen, offset_x=200)  # Draw star map first
-        draw_left_ui(screen, game, selected_star, target_star, show_menu)  # Draw UIs on top
+        draw_left_ui(screen, game, selected_star, target_star, show_menu, ships_to_send)  # Draw UIs on top
         draw_right_ui(screen, game, show_log, show_ships)
         
         pygame.display.flip()
