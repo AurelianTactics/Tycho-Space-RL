@@ -2,6 +2,7 @@ import random
 import pygame
 import string
 import math
+import numpy as np
 
 # Contents of /tycho-space-rl/tycho-space-rl/src/standalone_game/game_logic.py
 
@@ -66,6 +67,10 @@ class StarMap:
             star_map = [[0 for _ in range(self.width)] for _ in range(self.height)]
             for star in stars:
                 star_map[star.y][star.x] = star
+
+        # set the star index based on total number of stars
+        for star_index in range(len(stars)):
+            stars[star_index].index = star_index
 
         return star_map, stars
 
@@ -164,18 +169,22 @@ class TychoSpaceGame:
                 self.ships_in_transit.remove(ship)
 
     def star_battle(self, ships_in_transit):
-        star_to = self.star_map.stars[ships_in_transit["star_to"]]
-        if star_to.owner == ships_in_transit["ship_owner"]:
-            star_to.total_ships += ships_in_transit["number_of_ships"]
-            self.logs.append(f"Reinforcement: Player {ships_in_transit['ship_owner']} sent {ships_in_transit['number_of_ships']} ships to star {star_to.index}.")
-        else:
-            if ships_in_transit["number_of_ships"] > star_to.total_ships:
-                star_to.total_ships = ships_in_transit["number_of_ships"] - star_to.total_ships
-                star_to.owner = ships_in_transit["ship_owner"]
-                self.logs.append(f"Battle: Player {ships_in_transit['ship_owner']} won the battle at star {star_to.index} with {star_to.total_ships} ships remaining.")
+        star_to_index = ships_in_transit["star_to"]
+        if 0 <= star_to_index < len(self.star_map.stars):
+            star_to = self.star_map.stars[star_to_index]
+            if star_to.owner == ships_in_transit["ship_owner"]:
+                star_to.total_ships += ships_in_transit["number_of_ships"]
+                self.logs.append(f"Reinforcement: Player {ships_in_transit['ship_owner']} sent {ships_in_transit['number_of_ships']} ships to star {star_to.index}.")
             else:
-                star_to.total_ships -= ships_in_transit["number_of_ships"]
-                self.logs.append(f"Battle: Player {star_to.owner} defended star {star_to.index} with {star_to.total_ships} ships remaining.")
+                if ships_in_transit["number_of_ships"] > star_to.total_ships:
+                    star_to.total_ships = ships_in_transit["number_of_ships"] - star_to.total_ships
+                    star_to.owner = ships_in_transit["ship_owner"]
+                    self.logs.append(f"Battle: Player {ships_in_transit['ship_owner']} won the battle at star {star_to.index} with {star_to.total_ships} ships remaining.")
+                else:
+                    star_to.total_ships -= ships_in_transit["number_of_ships"]
+                    self.logs.append(f"Battle: Player {star_to.owner} defended star {star_to.index} with {star_to.total_ships} ships remaining.")
+        else:
+            self.logs.append(f"Error: Invalid star index {star_to_index} in ships_in_transit.")
 
     def capture_star(self):
         # to do maybe implement this in star_battle
@@ -208,10 +217,44 @@ class TychoSpaceGame:
         self.current_turn = 0
         self.turn = 0
 
-    def step(self, action):
-        # Implement the logic for a single step in the game
-        # to do: implement the logic for a single step in the game
+    def process_action_list(self, action_list, player):
+        for action in action_list:
+            number_of_ships, star_from_index, star_to_index = action
 
+            # Check if star_from exists and is player-owned
+            if not (0 <= star_from_index < len(self.star_map.stars)):
+                self.logs.append(f"Invalid action: star_from index {star_from_index} does not exist.")
+                return
+            star_from = self.star_map.stars[star_from_index]
+            if star_from.owner != player:
+                self.logs.append(f"Invalid action: star_from index {star_from_index} is not owned by player {player}.")
+                return
+
+            # Check if number of ships is in the valid range
+            if not (0 < number_of_ships <= star_from.total_ships):
+                self.logs.append(f"Invalid action: number of ships {number_of_ships} is not in the valid range.")
+                return
+
+            # Check if star_to exists
+            if not (0 <= star_to_index < len(self.star_map.stars)):
+                self.logs.append(f"Invalid action: star_to index {star_to_index} does not exist.")
+                return
+            star_to = self.star_map.stars[star_to_index]
+
+            # Add ships in transit
+            self.add_ships_in_transit(player, number_of_ships, star_from, star_to)
+            star_from.total_ships -= number_of_ships
+
+    def step(self, action_list):
+        # Process the action list for the human player (player 0)
+        self.process_action_list(action_list, player=0)
+
+        # Execute the AI turn
+        self.execute_ai_turn()        
+
+        self.end_turn()
+
+        # see if game ended
         winner = self.check_victory_conditions()
 
         obs = self.get_observation()
@@ -256,6 +299,33 @@ class TychoSpaceGame:
         # Return additional information about the current state
         return {}
 
+    def execute_ai_turn(self):
+        ai_player = 1
+        ai_stars = [star for star in self.star_map.stars if star.owner == ai_player]
+        other_stars = [star for star in self.star_map.stars if star.owner != ai_player]
+
+        for star in ai_stars:
+            if star.total_ships > 0:
+                # Find the closest star to attack or reinforce
+                target_star = min(other_stars, key=lambda s: star.distance_to(s))
+                if target_star.owner == -1 or target_star.owner != ai_player:
+                    # Send half of the ships to attack or reinforce
+                    ships_to_send = star.total_ships // 2
+                    if ships_to_send > 0:
+                        self.add_ships_in_transit(ai_player, ships_to_send, star, target_star)
+                        star.total_ships -= ships_to_send
+
+    def get_observations(self):
+        num_stars = len(self.star_map.stars)
+        obs = np.zeros((5, num_stars), dtype=np.float32)
+        for i, star in enumerate(self.star_map.stars):
+            obs[0, i] = star.x
+            obs[1, i] = star.y
+            obs[2, i] = star.owner
+            obs[3, i] = star.total_ships
+            obs[4, i] = star.ships_per_turn
+        return obs
+
 def show_star_info(screen, star, offset=(0, 0)):
     font = pygame.font.Font(None, 24)  # Smaller font
     owner_text = {-1: "Unowned", 0: "Human", 1: "AI"}  # Text for different owners
@@ -276,6 +346,7 @@ def show_star_info(screen, star, offset=(0, 0)):
 def draw_star_map(star_map, screen, offset_x=0, selected_star=None, target_star=None):
     BLACK = (0, 0, 0)
     SOFT_WHITE = (200, 200, 200)
+    owner_color = {-1: (128, 128, 128), 0: (255, 0, 0), 1: (0, 255, 0)}  # Match game colors
     
     star_map_surface = pygame.Surface((screen.get_width() - 400, screen.get_height()))  # Account for both UIs
     star_map_surface.fill(BLACK)
@@ -314,13 +385,12 @@ def draw_star_map(star_map, screen, offset_x=0, selected_star=None, target_star=
                                     (center_x, center_y), 
                                     star_size)
                 else:
-                    color = star.color
-                    shape = star.shape
-                    if shape == "circle":
+                    color = owner_color[star.owner]
+                    if star.owner == 0:
                         pygame.draw.circle(star_map_surface, color, 
                                         (center_x, center_y), 
                                         star_size)
-                    elif shape == "square":
+                    elif star.owner == 1:
                         rect_size = star_size * 2
                         pygame.draw.rect(star_map_surface, color, 
                                       (center_x - star_size, center_y - star_size,

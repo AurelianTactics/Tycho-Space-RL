@@ -1,5 +1,10 @@
 from gymnasium import Env, spaces
 import numpy as np
+from standalone_game.game_logic import TychoSpaceGame
+
+'''
+To do: be able to set the tycho space game options
+'''
 
 class TychoSpaceEnv(Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 30}
@@ -7,30 +12,22 @@ class TychoSpaceEnv(Env):
     def __init__(self, render_mode=None):
         super().__init__()
         self.render_mode = render_mode
-        self.action_space = spaces.Discrete(4)  # Example: 0=up, 1=down, 2=left, 3=right
-        self.observation_space = spaces.Box(low=0, high=10, shape=(2,), dtype=np.float32)  # Example observation space
+        self.game = TychoSpaceGame(map_width=50, map_height=50, seed=1, star_probability=0.1, max_stars=10)
+        num_stars = len(self.game.star_map.stars)
+        self.observation_space = spaces.Box(shape=(5, num_stars), dtype=np.float32)
+        #self.action_space = spaces.Discrete(4)  # Example: 0=up, 1=down, 2=left, 3=right
         self.state = None
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        self.state = np.random.randint(0, 10, size=(2,))
+        self.game = TychoSpaceGame(map_width=50, map_height=50, seed=seed, star_probability=0.1, max_stars=10)
+        self.state = self.game.get_observations()
         return self.state, {}
 
     def step(self, action):
-        if action == 0:  # up
-            self.state[1] += 1
-        elif action == 1:  # down
-            self.state[1] -= 1
-        elif action == 2:  # left
-            self.state[0] -= 1
-        elif action == 3:  # right
-            self.state[0] += 1
-
-        done = bool(np.any(self.state < 0) or np.any(self.state > 10))  # Example termination condition
-        reward = 1.0 if not done else -1.0
-        info = {}
-
-        return self.state, reward, done, False, info
+        obs, reward, terminated, truncated, info = self.game.step(action)
+        self.state = obs
+        return self.state, reward, terminated, truncated, info
 
     def render(self):
         pass  # Implement rendering logic here
