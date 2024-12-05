@@ -1,0 +1,203 @@
+make overall plan of minimal version
+    minimal version RL
+        reward
+        step on each turn of the game
+            if a move is not entered for a player, it does a no turn action
+        obs array
+            overall grid with stars and owner
+        can take a random turn
+            select a star (or don't)
+            send 1 to n ships to another target
+            end turn
+            
+
+    minimal version game
+        
+        want the array of stars
+        want the grid
+        want the minimal customization ptions
+            n players: at least 2
+            number of stars
+            min star distance
+            player icons
+        the turn based part
+        AI acts randomly
+        can click on the a star and see info. can unclick to remove the info
+        victory conditions
+        end screen with basic stats
+            number of turns, number of planets owned
+        menu
+            quit button
+            new game button
+
+specific prompts
+    DONE set the victory conditions
+        only one player owns stars
+        one player has over 90% of the stars (config option)
+        check at the end and the beginning of a turn
+        max number of turns. who owns the most stars at that point wins
+
+    DONE for the window on the star map
+        bug: not showing the player owned planets
+        in star have a dict of player discovered or not
+        populate different windows based on different discoveries
+
+  
+
+    DONE set up in the ui how to move
+        UI window on left. upper left is permnanet star, mid left is gazing star, lower left is menu
+
+        set which one is the player star
+        if is the player can left click to set the window permanently. space bar clears it
+        when two stars are selected, if either is player owned have a send ships from button and number of ships text bar
+
+	turn number, stars owned by each person
+
+
+DONE make a function to calculate how many turns it takes for ships to travel from one star to another. Use the euclidian distance between two stars to calculate the turns between stars. Have it be a customization option on how much distance_ships_travel_per_turn between stars and have it default to 5. To find how many turns it takes ships to travel between stars use (distance_between_stars) // distance_ships_travel_per_turn.
+
+Add an end turn method to game. At the end of this method increment the turn number. Have a button in the UI in the upper left for end turn. The user can click on this button or hit enter to end their turn.
+
+BACKLOG what info should and shouldn't be shown when clicking on planets
+
+DONE will want a step method and then sub methods that populate the five things froms tep
+	obs, reward, terminated, truncated, info
+	https://gymnasium.farama.org/api/env/#gymnasium.Env.step
+	done, truncated
+	reward
+	obs
+
+DONE set up the turn logic
+	turns between the planets on the uis
+	make an attribute ships_in_transit in game that is a list. each entry in it will be a dict.
+		make method a method that adds new items to the list. this dict should have:
+			turns_to_reach_star int
+			exact_turns_to_reach_stars float
+			ship_owner int (player who sent the ships)
+			number_of_ships int 
+			star_from: star_index star going from
+			star_to: star index star going to
+		make a method that iterates over the list and decrements turns to reach star by one
+			if the turns to reach stars <= 0 then call the star_battle() method and remove that item from the list
+
+DONE make a method that has the battle between the ships
+
+DONE Add a list attribute in game class that stores the logging messages. Whenever a turn ends append a 'Turn Ended' message. When a victory message is done append the winner and the victory condition. When star battle function occurs append a message describing what happened.
+
+DONE menu where can see ships in transit that player sent
+	ordered by when arriving
+	can click on it and see the line and a meter on the line with how close
+need a log that has the results
+
+Have a UI on the right hand side. Make the UI a rectangle that is not over the star map. There will be two buttons on the top. One will say log the other ships in flight.
+
+When the ships in flight button is clicked on, a window with a list of ships between stars will show up sorted by turns to arrival from lowest to highest. The window should be scrollable with the scroll button on the mouse, up or down arrows, or by clicking on a scroll element in the UI.
+
+When the log button is clicked make a rectangle that is not over the star map. this will be a log of past events. have a list in game that is a log of messages. the UI rectangle should have the last 5 events and be scrollable
+
+I want humans to be able to use the UI to send ships from a star they own to a different star. Simplify the information shown when star is right or left clicked on. Have the star name, then a symbol for the owner. Have total ships and ships per turn information as well. Have the font be smaller. When a planet is selected show a highlight ring around the star itself. A gold circle for left click and gold triangle for right click. If the left click star is owned by the player and there is a star selected with the right click then add a button to the UI that is send ships and a text window that is number of ships to send. If the number of ships to send is an integer > 0 and <= the total number of ships on that star. and the send ships button is clicked then call the add_ships_intransit_function(). Also decrement the number of ships from the planet that is sending the ships.
+
+
+DONE have human be able to send ships
+	text for star info is too much. remove thes elected star
+
+
+DONE The UI does not show who owns the star. It is a empty rectrangle. The stars that are right or left clicked are not highlighted. When two stars are selected there is no text box to decide how many ships to send. Only a incrementer. You can send ships from Player 0 or Player 1 when only PLayer 0 (the human player) should be able to send ships.
+
+
+DONE When two planets are selected, show the number of turns between them.
+	this is overlapping the star info
+
+DONE fix error with str for number of ships being sent
+
+I am getting this error: Traceback (most recent call last): File " line 260, in <module> main() File "C: line 246, in main ships_to_send += event.unicode TypeError: unsupported operand type(s) for +=: 'int' and 'str'
+
+Make it so in the text box for sending number of ships, there is a box for send ships. The ships are not sent until the input in number of ships is validated as an int in the proper range.
+
+
+
+DONE AI
+Add a method for execute_ai_turn() in TychoSpaceGame. For now the AI will always be the second player, ie player 1. Come up with an AI that can play TychoSpaceGame at a basic level. The AI should seek to maximize its chances of winning while not taking too long to generate its turn. The AI should try to capture player and non player stars while defending its own stars. The AI should do this by sending ships from stars to other stars in an intelligent way.
+
+think through the minimal AI for the player
+	BACKLOG pure random but not doing too many options?
+		for each planet roll if should send or not. if should send roll % of ships and what planet
+	simple
+		ask copilot 
+
+	which is human and which is AI?
+		always player 0 is human, player 1 is AI. for step and waht not just inputting the player actions.
+
+
+
+
+DONE game over screen
+	stats, seed, winner. new game/reset game
+When the game is over show a pop up on the screen that has:
+	the winner
+	the number of turns taken
+	the number of planets the player has
+	the total number of ships the player has
+	buttons for new game and quit game
+
+
+game logic in step
+	step
+	list of actions. -1 to end turn. other actions are planet_from, planet_to, number of ships
+	make obs
+		in game and also so it lines up in the env
+
+	prompt for obs:
+		make an observation to be returned the gym env. have it be a list of numpy32 array of size (5, num_stars)
+		all 5 layers rows should have star info.
+		Row 0 is the x positions of the stars
+		Row 1 is the y position of the stars
+		Row 2 is the owner of the stars
+		Row 3 is the total ships on the star
+		Row 4 is the ships per turn of the stars
+		fill out the observation by iterating over the star map and populating the obs
+		
+DONE prompt for step
+the human player should be able to enter an action through the step() function. The action is a list. each item in the list is is a tuple of (number_of_ships, star_from, star_to). Write a function to turn the list into valid commands for add_ships_in_transit. Check that the star_from exists and is player owned, that the number of ships is in the valid range, adn that star_to exists. Once each action in action_list has been iterated over end the players turn. If any action is invalid end the player's turn.
+
+edit tycho_space.py to use a class isntance from TychoSpaceGame.
+
+self.observation_space should be based on the size of the star map and what observation will be returned.
+tycho_space.py .step() should call TychoSpaceGame.step(). .reset() should grab a new TychoSpaceGame isntance and the new observation.
+
+DONE the reset in TychoSpaceGame should return the obs
+
+DONE need a reset function from Tycho
+
+MEH need a close game function from Tycho	
+
+
+Testing conditions
+DONE win one game with the UI
+
+STOPPED HERE
+have the env set up work
+	maybe have the game end after 100 turns?
+
+try putting the package on pypi
+	https://packaging.python.org/en/latest/tutorials/packaging-projects/
+
+	once package is up there do a fresh install and test
+
+bugs
+	You have the AI and human mixed up in the UI. the human is the red planet on the screen and green in the UI and the planets doen't match. I can send ships as player 1 but not player 0 when player 0 should be the human. Also I can only send ships by clicking plus and minus. I want to send ships by entering text in a text box.
+
+	stars when clicked should highlight around the planet
+	turns to reach not enough room
+	UI font too big
+	player symbols and planets owned
+	fix player symbol size
+	end turn should be in upper left
+	UI ugly as hell
+	not enough border on the right hand side UI and the stars
+	UI overlapping some stars
+
+misc thing
+	can send ships instantly the way the current logic works. May or may not be ideal
+
+

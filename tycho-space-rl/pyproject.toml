@@ -4,13 +4,17 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tycho-space-rl"
-version = "0.1.0"
+version = "0.0.1"
 description = "A Gymnasium-compliant environment and standalone game for Tycho Space RL."
-authors = [{ name = "Your Name", email = "your.email@example.com" }]
-dependencies = [
-    "gymnasium",
-    "pygame",
-    "numpy"
-]
-license = { text = "MIT" }
+authors = [{ name = "Aurelian Tactics", email = "aureliantactics@gmail.com" }]
 readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/AurelianTactics/Tycho-Space-RL"
+Issues = "https://github.com/AurelianTactics/Tycho-Space-RL/issues"

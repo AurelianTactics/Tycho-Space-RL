@@ -1,12 +1,14 @@
 ### Tycho Space RL: Gymnasium Environment and Stand-alone Pygame
 
+*This code was mostly written with GitHub Copilot in December of 2024 using GPT 4o and Sonnet 3.5 preview. Main goal was to see how well the Copilot Edits feature works while programming.*
+
 *Tycho Space RL is a simple turn-based game. Each player starts with one star. The winner is the one who captures all of his opponent's stars. This is a turn-based game where players simultaneously enter their moves.*
 
 #### Goals:
 - Create a Gymnasium-compliant environment
 - Can also be played as a standalone game
-- Trying out new Copilot and AI coding tools
-- Goal is to have those tools do as much of the work as possible
+- Trying out new Copilot and AI coding functionality
+- Have AI coding tools do as much of the works as possible.
 
 #### Installation
 To install the necessary dependencies, run:

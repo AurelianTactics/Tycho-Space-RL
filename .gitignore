@@ -120,3 +120,4 @@ cython_debug/
 
 Gymnasium/*
 to do.txt
+.vscode/*

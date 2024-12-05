@@ -108,6 +108,11 @@ class TychoSpaceGame:
         for i in range(self.num_players):
             player_home_star = random.choice([star for star in self.star_map.stars if star.owner == -1])
             player_home_star.owner = i
+            # testing code
+            # if i == 0:
+            #     player_home_star.total_ships = 1000
+            # else:
+            #     player_home_star.total_ships = 10
             player_home_star.total_ships = 10
             player_home_star.ships_per_turn = 10
             player_home_star.color = self.player_colors[i % len(self.player_colors)]
