@@ -118,6 +118,7 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-Gymnasium/*
+Gymnasium/
 to do.txt
 .vscode/*
+myenv/
