@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "tycho-space-rl"
-version = "0.0.1"
+name = "tycho_space_rl"
+version = "0.0.2"
 description = "A Gymnasium-compliant environment and standalone game for Tycho Space RL."
 authors = [{ name = "Aurelian Tactics", email = "aureliantactics@gmail.com" }]
 readme = "README.md"

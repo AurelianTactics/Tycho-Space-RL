@@ -1,0 +1,93 @@
+backlog
+test the pypi install and mnake it work
+    does not install the relevant packages like pygame
+    does not have requirements.txt
+    relative imports not working properly
+
+tests are not checked and do not pass
+can have more rigorous testing
+
+add doc strings
+clean up code
+lot of optimization can be done
+
+the seperation between UI coloring in game_logic and main.py should be done better
+    some constants and one and not the other that both need
+
+have render set up for the env at some point
+
+gym obs
+    more friendly. like numpy array with the stars and what not rather than what I'm returning
+    
+more efficient way of seeing distance between two planets. like a searchable table
+
+UI and ships in flight when clicking on buttons be more UI friendly
+
+
+AI modes
+    pure random but not doing too many options?
+		for each planet roll if should send or not. if should send roll % of ships and what planet
+can improve the ships to arrival menu
+    sortable, searchable etc
+
+can have info available more or less base don customization
+    ie see all the planet info or none unless discovered etc
+    can see all ships in transit or none
+
+able to send ships to own star (arrive at very end of x turns)
+
+handling order of battle between arrival
+    make ties more fair: have it be by actual distance.
+        could maybe take all 0 arrival turns, then sort by when on the turn then do them one by one
+
+optimize the code. like the victory conditions can be done much better
+
+for ships in flight
+    can limit it to x per player, thus have more obs
+        can make them all hidden or discoverable in some sequences based on customization options
+better obs array
+    for each player
+        player owned
+        player information: -1 if unknown, 1 if known
+        ships per turn
+        number of ships (projected based on ships per turn and last known). if owned by other player then some unknown
+        brainstorm other obs
+        ships in flight: not sure how to do this without a large number of obs or a big number of lists
+            or some sort of picture maybe? like lines and size of the fleet
+            is like a graph of some sort
+    some overall options maybe like num starting players, victory conditions, turn number
+option: after x turn game ends and player with most stars
+reward options based on stars held, % of stars held versus opponent, resources per urn, total resources
+    maybe scaled yb oponenta s well
+dependencies
+more advanced combat options
+    random surprise, turn based shooting
+log of all the action
+can win by capture x% of the total stars
+score based on how many turns to finish
+score based on number of planets
+multiplayer
+online multiplayer
+as an app with some sort of payment mechanism
+    player can pay to make a logo. AI scans for if it is appropriate
+    logo rewards
+try with an RL package to see if anything can be learned
+more victory condition stats
+    log results, leaderboard, seed for the game etc
+save / load button
+how to handle a step where an action is not entered for a player
+    ie for AI. default AI mode? random turn
+    might not be needed... as there should be some built in default AI behavior
+
+for RL stuff, is this something that should be a graph NN?
+    sending ships to various locations seems like a graph problem
+    not really sure how it would be represented in traditional RL
+        embedding? huge list? picture?
+
+better store for max number of turns victory condition
+timer
+
+how to automate testing and iteration for enjoyment of the game
+
+optimize the code
+    see how copilot / ai tools approaches this

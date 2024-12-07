@@ -9,29 +9,10 @@
 - Can also be played as a standalone game
 - Trying out new Copilot and AI coding functionality
 - Have AI coding tools do as much of the works as possible.
-
-#### Installation
-To install the necessary dependencies, run:
-
-```
-pip install -e .
-```
-
-#### Usage
-To use the Gymnasium environment, you can create an instance of the Tycho Space environment as follows:
-
-```python
-import gymnasium
-import gymnasium_env
-
-env = gymnasium.make('gymnasium_env/TychoSpace-v0')
-```
-
-For the standalone game, run the main script:
-
-```
-python src/standalone_game/main.py
-```
+- Uploaded, distributable, and installable through test.pypi.org
 
 #### License
 This project is licensed under the MIT License. See the LICENSE file for more details.
+
+#### Backlog
+- As the main goals of this project have been met, I will likely not revisit for a bit. Some rough items to work on if I decide to pick up on the project are in archive/backlog.txt
